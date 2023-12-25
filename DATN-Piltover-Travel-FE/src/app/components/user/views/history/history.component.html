@@ -1,0 +1,81 @@
+<main>
+  <section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url(../assets/images/bg_1.jpg);">
+    <!-- <div class="overlay"></div> -->
+    <div class="container">
+      <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+        <div class="col-md-9 ftco-animate pb-5 text-center">
+          <p class="breadcrumbs">
+            <span class="mr-2"><a href="/">Trang chủ <i class="fa fa-chevron-right"></i></a></span>
+            <span class="mr-2"><a href=""> Lịch sử đặt tour<i class="fa fa-chevron-right"></i></a></span>
+          </p>
+          <h1 class="mb-0 bread">Lịch sử đặt tour</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="ftco-section services-section">
+
+    <div class="tab-pane mx-auto" style="width: 90% !important;">
+      <div class="cart_inner text-dark" style="min-height: 360px !important;">
+        <div class="table-responsive">
+          <p-table #dt2
+            [value]="List"
+            dataKey="id"
+            [rows]="5"
+            [showCurrentPageReport]="true"
+            [rowsPerPageOptions]="[5,10, 25, 50]"
+            [paginator]="true"
+            currentPageReportTemplate="Hiển thị từ {first} đến {last} trong danh sách lịch sử người dùng"
+            [globalFilterFields]="['id', 'totalPrice']" [tableStyle]="{ 'min-width': '75rem' }">
+            <ng-template pTemplate="caption">
+              <div class="flex">
+                <span class="p-input-icon-left ml-auto">
+                  <i class="pi pi-search"></i>
+                  <input pInputText type="text" (input)="dt2.filterGlobal($any($event.target).value, 'contains')"
+                    placeholder="Search keyword" />
+                </span>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="header">
+
+              <tr class="table-info">
+                <th pSortableColumn="id" style="width: 20% !important;" class="text-center">Mã booking <p-sortIcon field="id"></p-sortIcon></th>
+                <th pSortableColumn="totalPrice" style="width: 20% !important;" class="text-center">Tổng tiền <p-sortIcon field="totalPrice"></p-sortIcon></th>
+                <th pSortableColumn="createTime" style="width: 20% !important;" class="text-center">Ngày đặt <p-sortIcon field="createTime"></p-sortIcon></th>
+                <th pSortableColumn="tourDate.initiateDate" style="width: 20% !important;" class="text-center">Ngày đi <p-sortIcon field="tourDate.initiateDate"></p-sortIcon></th>
+                <th pSortableColumn="status" style="width: 10% !important;" class="text-center">Trạng thái <p-sortIcon field="status"></p-sortIcon></th>
+                <th  style="width: 10% !important;"></th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-h>
+              <tr>
+                <td class="text-center">{{h.id}}</td>
+                <td class="text-center">{{h.totalPrice|number}} VNĐ</td>
+                <td class="text-center">{{h.createTime|date:'dd-MM-yyyy'}}</td>
+                <td class="text-center">{{h.tourDate.initiateDate|date:'dd-MM-yyyy'}}</td>
+                <td class="text-center" [ngSwitch]="h.status">
+                  <div *ngSwitchCase="0" class="text-secondary">Chưa thanh toán</div>
+                  <div *ngSwitchCase="1" class="text-success">Đã thanh toán</div>
+                  <div *ngSwitchCase="2" class="text-danger-emphasis">Đã hủy</div>
+                </td>
+                <td>
+                  <a class="btn btn-info" [routerLink]="['/history/detail']" [queryParams]="{id:h.id}">
+                    <i><span class="bi bi-plus-circle"></span></i>
+                  </a>
+                  <button class="btn btn-danger ml-1" (click)="cancelBooking(h.id)"
+                  *ngIf="h.status===bookingStatus1"><i class="bi bi-trash3"></i></button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="6" class="text-center">Không tìm thấy kết quả phù hợp!.</td>
+              </tr>
+            </ng-template>
+          </p-table>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

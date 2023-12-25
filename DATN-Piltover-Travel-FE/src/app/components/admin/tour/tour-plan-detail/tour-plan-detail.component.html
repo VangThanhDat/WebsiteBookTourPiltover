@@ -1,0 +1,148 @@
+<p-toast key="success"></p-toast>
+<p-toast key="warn"></p-toast>
+<p-toast key="error"></p-toast>
+<div class="card" *ngIf="currentTourPlan">
+  <div class="card-body">
+    <h4 class="card-title">Danh sách Chi Tiết Kế Hoạch [{{currentTourPlan.startTime | date:'HH:mm dd/MM/yyyy'}}]
+    </h4>
+    <button pButton *ngIf="currentTourPlan && currentTourPlan.tourDate.status.id == 1" icon="pi pi-plus"
+      class="btn btn-success mb-3" (click)="open('add',null)">Thêm Chi Tiết Kế Hoạch</button>
+
+    <ng-template #addModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Thêm Chi Tiết Kế Hoạch
+        </h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <form #addForm="ngForm" class="container" (ngSubmit)="submitAdd(addForm)">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-12">
+              <label class="form-label">Mô tả:</label>
+              <input #description="ngModel" name="description" class="form-control" type="text" ngModel required>
+              <small *ngIf="description.touched && description.invalid">Mô tả không được bỏ trống</small>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <label class="form-label">Thời gian bắt đầu:</label>
+              <input #startTime="ngModel" name="startTime" id="startTime" class="form-control" type="time" ngModel
+                required>
+              <small *ngIf="startTime.touched && startTime.invalid">Thời gian bắt đầu không được bỏ trống</small>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Thời gian kết thúc:</label>
+              <input #endTime="ngModel" name="endTime" id="endTime" class="form-control" type="time" ngModel required>
+              <small *ngIf="endTime.touched && endTime.invalid">Thời gian kết thúc không được bỏ trống</small>
+              <small *ngIf="endTime.touched && startTime.value  >= endTime.value">Thời gian kết thúc phải xảy ra sau
+                thời
+                gian bắt
+                đầu</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-info" *ngIf="checkValid(addForm)">Thêm</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <ng-template #confirmModal let-modal>
+      <div class="modal-header">
+        <b>Vui lòng xác nhận</b>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <div class="modal-body">
+        Bạn có chắc muốn xóa? Một khi đã xóa sẽ không thể khôi phục lại
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success" (click)="modal.close()">Hủy bỏ</button>
+        <button id="confirmDelete" class="btn btn-danger" (click)="modal.close()">Xác nhận</button>
+      </div>
+    </ng-template>
+
+    <div class="table-responsive">
+      <p-table #dt1 [value]="planDetailList" dataKey="id" [rows]="10" [paginator]="true" editMode="row"
+        currentPageReportTemplate="Hiển thị từ bảng {first} đến {last} trong tổng {totalRecords} bảng"
+        [globalFilterFields]="['startName', 'startAddress', 'transport.name']" [tableStyle]="{'min-width': '50rem'}">
+        <ng-template pTemplate="header" class="theader">
+          <tr>
+            <th pSortableColumn="description" style="width: 500px;">Mô tả<p-sortIcon field="description"></p-sortIcon>
+            </th>
+            <th pSortableColumn="startTime" style="width: 200px;">Từ<p-sortIcon field="startTime"></p-sortIcon></th>
+            <th pSortableColumn="endTime" style="width: 200px;">Đến<p-sortIcon field="endTime"></p-sortIcon></th>
+            <th></th>
+          </tr>
+          <tr>
+            <th>
+              <p-columnFilter type="text" field="description"></p-columnFilter>
+            </th>
+            <th>
+              <p-columnFilter type="text" field="startTime"></p-columnFilter>
+            </th>
+            <th>
+              <p-columnFilter type="text" field="endTime"></p-columnFilter>
+            </th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" class="tbody" let-planDetailList let-editing="editing" let-ri="rowIndex">
+          <tr [pEditableRow]="planDetailList">
+            <td>
+              <p-cellEditor>
+                <ng-template pTemplate="input">
+                  <input pInputText type="text" [(ngModel)]="planDetailList.description" style="width: 500px;" required>
+                </ng-template>
+                <ng-template pTemplate="output">
+                  {{planDetailList.description}}
+                </ng-template>
+              </p-cellEditor>
+            </td>
+            <td>
+              <p-cellEditor>
+                <ng-template pTemplate="input">
+                  <p-calendar [(ngModel)]="planDetailList.startTime" [touchUI]="true" [timeOnly]="true"
+                    [showSeconds]="true" inputId="timeonly" dataType="string"></p-calendar>
+                </ng-template>
+                <ng-template pTemplate="output">
+                  {{planDetailList.startTime}}
+                  <p>
+                    <small *ngIf="checkValidTime(planDetailList.startTime) == false">
+                      Thời gian bắt đầu không khớp với lịch trình vui lòng cập nhập lại</small>
+                  </p>
+                </ng-template>
+              </p-cellEditor>
+            </td>
+            <td>
+              <p-cellEditor>
+                <ng-template pTemplate="input">
+                  <p-calendar [(ngModel)]="planDetailList.endTime" [touchUI]="true" [timeOnly]="true"
+                    [showSeconds]="true" inputId="timeonly" dataType="string"></p-calendar>
+                </ng-template>
+                <ng-template pTemplate="output">
+                  {{planDetailList.endTime}}
+                  <p>
+                    <small *ngIf="checkValidTime2(planDetailList.startTime, planDetailList.endTime) == false">
+                      Thời gian kết thúc phải bắt đầu sau thời gian xuất phát</small>
+                  </p>
+                </ng-template>
+              </p-cellEditor>
+            </td>
+            <td class="button-group">
+              <button pButton icon="pi pi-pencil" *ngIf="!editing && currentTourPlan.tourDate.status.id == 1"
+                (click)="onRowEditInit(planDetailList)" pInitEditableRow class="btn btn-warning">Sửa</button>
+              <button pButton icon="pi pi-times-circle" *ngIf="!editing && currentTourPlan.tourDate.status.id == 1"
+                (click)="open('confirm',planDetailList.id)" class="btn btn-danger">Xóa</button>
+              <button *ngIf="editing" pButton pRipple type="button" pSaveEditableRow icon="pi pi-check"
+                (click)="onRowEditSave(planDetailList)"
+                class="p-button-rounded p-button-text p-button-success mr-2"></button>
+              <button *ngIf="editing" pButton pRipple type="button" pCancelEditableRow icon="pi pi-times"
+                (click)="onRowEditCancel(planDetailList, ri)"
+                class="p-button-rounded p-button-text p-button-danger"></button>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>

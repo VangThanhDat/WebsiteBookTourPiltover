@@ -1,0 +1,55 @@
+<!-- ============================================================== -->
+<!-- toggle and nav items -->
+<!-- ============================================================== -->
+<ul class="navbar-nav float-start me-auto">
+  <!-- <li class="nav-item">
+    <a class="nav-link waves-effect waves-dark" href="/admin/dashboard"> Administrator </a>
+  </li> -->
+  <!-- <li class="nav-item">
+    <a class="nav-link waves-effect waves-dark" href="/admin/about"> About </a>
+  </li> -->
+  <!-- ============================================================== -->
+  <!-- create new -->
+  <!-- ============================================================== -->
+  <!-- <li class="nav-item d-none d-md-block" ngbDropdown placement="bottom-end">
+    <a ngbDropdownToggle class="nav-link waves-effect waves-dark" href="javascript:void(0)" data-toggle="dropdown"
+      aria-haspopup="true" aria-expanded="false">
+      <span>Create New</span>
+    </a>
+    <div ngbDropdownMenu>
+      <a class="dropdown-item" href="#">Action</a>
+      <a class="dropdown-item" href="#">Another action</a>
+      <div class="dropdown-divider"></div>
+      <a class="dropdown-item" href="#">Something else here</a>
+    </div>
+  </li> -->
+</ul>
+<!-- ============================================================== -->
+<!-- Right side toggle and nav items -->
+<!-- ============================================================== -->
+<ul class="navbar-nav float-end">
+  <!-- ============================================================== -->
+  <!-- User profile and search -->
+  <!-- ============================================================== -->
+  <li class="nav-item" ngbDropdown placement="bottom-end">
+    <a ngbDropdownToggle class="nav-link waves-effect waves-dark pro-pic" href="javascript:void(0)"
+      data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <b [hidden]="!isLoggedIn">
+        <span>{{accountName}}</span>
+      </b>
+      <b [hidden]="isLoggedIn"><span>Tài khoản</span></b>
+    </a>
+    <ul class="dropdown-menu-right" ngbDropdownMenu>
+      <li><a class="dropdown-item" [hidden]="isLoggedIn" onclick="this.router.navigateByUrl('/auth/login');"
+          routerLink="/auth/login">Đăng nhập</a></li>
+      <li><a class="dropdown-item" [hidden]="isLoggedIn" routerLink="/auth/sign-up">Đăng ký</a></li>
+      <li><a class="dropdown-item" [hidden]="!isLoggedIn" routerLink="/auth/forgot-pass">Thay đổi thông tin</a></li>
+      <div class="dropdown-divider"></div>
+      <li><a class="dropdown-item" [hidden]="isLoggedIn" routerLink="/auth/forgot-pass">Quên mật khẩu</a></li>
+      <li><a class="dropdown-item" (click)="logOut()" [hidden]="!isLoggedIn">Đăng xuất</a></li>
+    </ul>
+  </li>
+  <!-- ============================================================== -->
+  <!-- User profile and search -->
+  <!-- ============================================================== -->
+</ul>

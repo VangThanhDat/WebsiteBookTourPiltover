@@ -1,0 +1,91 @@
+<div class="card">
+  <div class="card-body">
+    <!-- title -->
+    <div class="row">
+      <div class="col-md-9">
+        <h4 class="card-title">Doanh thu phương tiện</h4>
+      </div>
+      <div class="col-md-3">
+        <input type="text" class="rounded-input" [(ngModel)]="searchTransportName" placeholder="Tìm tên phương tiện..." (input)="searchTransport()">
+        <span class="fa fa-search search-icon"></span>
+      </div>
+    </div>
+    <br>
+    <!-- title -->
+    <div class="table table-bordered table-light table-striped">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <!-- Tên tour -->
+            <th
+              class="text-dark font-medium fs-4 text-center clickable"
+              (click)="sortBy('transport_name')"
+            >
+              Tên phương tiện
+              <span class="icon"> <i class="fa fa-sort"></i></span>
+            </th>
+            <!-- Giá người lớn -->
+            <th
+              class="text-dark font-medium fs-4 text-center clickable"
+              (click)="sortBy('transport_price')"
+            >
+              Giá phương tiện
+              <span class="icon">
+                <i class="fa fa-sort"></i>
+              </span>
+            </th>
+
+            <!-- Thiếu thi đặt -->
+            <th
+              class="text-dark font-medium fs-4 text-center clickable"
+              (click)="sortBy('total_transport_booking')"
+            >
+              Tổng số đặt
+              <span class="icon">
+                <i class="fa fa-sort"></i>
+              </span>
+            </th>
+            <!-- Tổng doanh thu -->
+            <th
+              class="text-dark font-medium fs-4 text-center clickable"
+              (click)="sortBy('total_transport_revenue')"
+            >
+              Tổng doanh thu
+              <span class="icon">
+                <i class="fa fa-sort"></i>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ts of TransportRevenue | paginate: { itemsPerPage: 10, currentPage: currentPage };">
+            <td>
+              <h6 class="mb-0 font-medium">{{ ts.transport_name }}</h6>
+            </td>
+            <td>
+              <h6 class="mb-0 font-medium">{{ formatCurrency(ts.transport_price) }}</h6>
+            </td>
+            <td>
+              <h6 class="mb-0 font-medium">
+                {{ ts.total_transport_booking }}
+              </h6>
+            </td>
+            <td>
+              <h6 class="mb-0 font-medium">
+                {{ formatCurrency(ts.total_transport_revenue) }}
+              </h6>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!searchFound">
+        <p class="text-center" style="padding: 10px;">Không tìm thấy kết quả.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row mt-5">
+  <div class="col text-center">
+    <pagination-controls (pageChange)="currentPage=$event" [maxSize]="5" [directionLinks]="true" [autoHide]="true" [previousLabel]="'Trước'" [nextLabel]="'Tiếp'"></pagination-controls>
+  </div>
+</div>

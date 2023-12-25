@@ -1,0 +1,917 @@
+<p-toast key="success"></p-toast>
+<p-toast key="error"></p-toast>
+<p-toast key="warn"></p-toast>
+<p-toast key="info"></p-toast>
+<div class="progress-spinner" *ngIf="loadingOverLay$ | async">
+  <p-progressSpinner></p-progressSpinner>
+</div>
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">Danh sách Tour</h4>
+    <div class="button-group">
+      <button pButton icon="pi pi-plus" class="btn btn-success mb-3" (click)="open('addTour', null)"
+        [hidden]="loadingOverLay$ | async">Thêm Tour</button>
+      <button pButton class="btn btn-success mb-3" (click)="open('hotel', null)">Khách Sạn</button>
+      <button pButton class="btn btn-success mb-3" (click)="open('transport', null)">Phương Tiện</button>
+    </div>
+    <!-- Add Tour Modal -->
+    <ng-template #addTourModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Thêm Tour</h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <form #addTourForm="ngForm" class="container" (ngSubmit)="submitAddTour(addTourForm)">
+        <div class="modal-body">
+          <label class="form-label">Tên Tour:</label>
+          <div class="row">
+            <input #name="ngModel" class="form-control" type="text" placeholder="VD: Chuyến đi gia đình đến Phú Quốc"
+              name="name" ngModel [maxlength]="50" required>
+            <small *ngIf="name.touched && name.invalid">Tên không được trống</small>
+          </div>
+          <label class="form-label">Điểm đến:</label>
+          <div class="row">
+            <select #province="ngModel" class="form-control col-md-3" name="province" (change)="provinceChange()"
+              id="province" ngModel required>
+              <option value="">Chọn Tỉnh/Thành Phố</option>
+            </select>
+            <select #district="ngModel" class="form-control col-md-3" name="district" (change)="districtChange()"
+              id="district" ngModel required>
+              <option value="">Chọn Quận/Huyện</option>
+            </select>
+            <select #ward="ngModel" class="form-control col-md-3" name="ward" id="ward" ngModel required>
+              <option value="">Chọn Phường/Xã</option>
+            </select>
+            <select #hotel="ngModel" class="form-control col-md-3" name="hotel" id="hotel" ngModel required>
+              <option value="">Chọn Khách Sạn</option>
+            </select>
+          </div>
+          <label class="form-label">Đường:</label>
+          <div class="row">
+            <input #road="ngModel" class="form-control" name="road" type="text" placeholder="VD: Số 123, Đường ABC"
+              ngModel required>
+          </div>
+          <div>
+            <div *ngIf="province.touched && district.touched && ward.touched && road.touched">
+              <small *ngIf="province.invalid || district.invalid || ward.invalid || road.invalid">Vui lòng điền đầy
+                đủ điểm đến và đường</small>
+            </div>
+          </div>
+          <label class="form-label">Số Lượng Khách:</label>
+          <div class="row">
+            <input #availability="ngModel" class="form-control" name="availableSpaces" type="number" min="10" max="200"
+              placeholder="Giới hạn từ 10 đến 200" ngModel required>
+            <small *ngIf="availability.touched && !availability.value">Vui lòng nhập số lượng</small>
+            <small *ngIf="availability.touched && availability.value && availability.value < 0">Vui lòng không nhập số
+              âm</small>
+            <small
+              *ngIf="availability.touched && availability.value && availability.value > 0 && availability.value < 10">Số
+              lượng phải từ 10
+              trở lên</small>
+            <small *ngIf="availability.touched && availability.value && availability.value > 200">Số lượng vượt quá
+              200</small>
+          </div>
+          <div class="row">
+            <div class="col-4">
+              <label class="form-label">Người lớn:</label>
+              <div class="input-group">
+                <input #adultPrice="ngModel" name="adult" id="adult" type="number" class="form-control" ngModel
+                  required>
+                <span class="input-group-text" id="basic-addon2">.000 VNĐ</span>
+              </div>
+              <small *ngIf="adultPrice.touched && !adultPrice.value">Vui lòng nhập giá vé người lớn</small>
+              <small *ngIf="adultPrice.touched && adultPrice.value && adultPrice.value < 0">Giá vé người lớn không được
+                là số âm</small>
+              <small
+                *ngIf="adultPrice.touched && adultPrice.value && childrenPrice.value && adultPrice.value < childrenPrice.value && adultPrice.value >= 0">Giá
+                vé người lớn không
+                được nhỏ hơn trẻ em</small>
+            </div>
+            <div class="col-4">
+              <label class="form-label">Trẻ em:</label>
+              <div class="input-group">
+                <input #childrenPrice="ngModel" name="children" id="children" type="number" class="form-control" ngModel
+                  required>
+                <span class="input-group-text" id="basic-addon2">.000 VNĐ</span>
+              </div>
+              <small *ngIf="childrenPrice.touched && !childrenPrice.value">Vui lòng nhập giá vé trẻ em</small>
+              <small *ngIf="childrenPrice.touched && childrenPrice.value && childrenPrice.value < 0">Giá vé trẻ em không
+                được là số
+                âm</small>
+              <small
+                *ngIf="childrenPrice.touched && childrenPrice.value && adultPrice.value && childrenPrice.value > adultPrice.value && childrenPrice.value >= 0">Giá
+                vé trẻ không được
+                lớn hơn giá người lớn</small>
+            </div>
+            <div class="col-4">
+              <label class="form-label">Phương tiện khởi hành:</label>
+              <select #transport="ngModel" name="transport" class="form-control" ngModel required>
+                <option value="" selected>Chọn phương tiện</option>
+                <option *ngFor="let item of availableTransport" value="{{item.id}}">
+                  {{item.name}}</option>
+              </select>
+              <small *ngIf="transport.touched && transport.invalid">Phương tiện không hợp lệ</small>
+            </div>
+          </div>
+          <label class="form-label">Ảnh Bìa</label>
+          <div class="row">
+            <input class="form-control" type="file" accept="image/*" (change)="onFileChange($event)">
+            <div class="col-2"></div>
+            <div class="col-8"> <img [src]="mainImgUrl" alt="" width="100%">
+            </div>
+            <div class="col-2"></div>
+          </div>
+          <label class="form-label">Mô Tả:</label>
+          <div class="row">
+            <textarea #description="ngModel" name="description" id="" rows="6" ngModel required></textarea>
+            <small *ngIf="description.touched && description.invalid">Vui lòng điền mô tả</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-info" (click)="modal.close()"
+            *ngIf="checkValid('tour',addTourForm)">Thêm</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <!-- Edit Tour Modal -->
+    <ng-template #editTourModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Chỉnh Sửa Tour</h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <form #editTourForm="ngForm" class="container" (ngSubmit)="submitEditTour(editTourForm)">
+        <div class="modal-body">
+          <label class="form-label">Tên Tour:</label>
+          <div class="row">
+            <input #name="ngModel" class="form-control" type="text" placeholder="VD: Chuyến đi gia đình đến Phú Quốc"
+              name="name" ngModel="{{editTour.name}}" [maxlength]="50" required>
+            <small *ngIf="name.touched && name.invalid">Tên không được trống</small>
+          </div>
+          <label class="form-label">Điểm đến:</label>
+          <div class="row">
+            <select #province class="form-control col-md-3" name="province" (change)="provinceChange()" id="province"
+              required>
+              <option value="">Chọn Tỉnh/Thành Phố</option>
+            </select>
+            <select #district class="form-control col-md-3" name="district" (change)="districtChange()" id="district"
+              required>
+              <option value="">Chọn Quận/Huyện</option>
+            </select>
+            <select #ward class="form-control col-md-3" name="ward" id="ward" required>
+              <option value="">Chọn Phường/Xã</option>
+            </select>
+            <select #hotel class="form-control col-md-3" name="hotel" id="hotel" ngModel="{{editTour.hotel.id}}"
+              required>
+              <option value="">Chọn Khách Sạn</option>
+            </select>
+          </div>
+          <label class="form-label">Đường:</label>
+          <div class="row">
+            <input #road="ngModel" class="form-control" name="road" type="text" placeholder="VD: Số 123, Đường ABC"
+              ngModel="{{roadValue}}" required>
+          </div>
+          <div>
+            <div *ngIf="road.touched">
+              <small *ngIf="road.invalid">Vui lòng điền đầy
+                đủ điểm đến và đường</small>
+            </div>
+          </div>
+          <label class="form-label">Số Lượng Khách:</label>
+          <div class="row">
+            <input #availability="ngModel" class="form-control" name="availableSpaces" type="number" min="10" max="200"
+              placeholder="Giới hạn từ 10 đến 200" ngModel="{{editTour.availableSpaces}}" required>
+            <small *ngIf="availability.touched && !availability.value">Vui lòng nhập số lượng</small>
+            <small *ngIf="availability.touched && availability.value && availability.value < 0">Vui lòng không nhập số
+              âm</small>
+            <small
+              *ngIf="availability.touched && availability.value && availability.value > 0 && availability.value < 10">Số
+              lượng phải từ 10
+              trở lên</small>
+            <small *ngIf="availability.touched && availability.value && availability.value > 200">Số lượng vượt quá
+              200</small>
+          </div>
+          <div class="row">
+            <div class="col-4">
+              <label class="form-label">Người lớn:</label>
+              <div class="input-group">
+                <input #adultPrice="ngModel" name="adult" id="adult" type="number" class="form-control"
+                  ngModel="{{editTour.price.adultPrice/1000}}" required>
+                <span class="input-group-text" id="basic-addon2">.000 VNĐ</span>
+              </div>
+              <small *ngIf="adultPrice.touched && !adultPrice.value">Vui lòng nhập giá vé người lớn</small>
+              <small *ngIf="adultPrice.touched && adultPrice.value && adultPrice.value < 0">Giá vé người lớn không được
+                là số âm</small>
+              <small
+                *ngIf="adultPrice.touched && adultPrice.value && childrenPrice.value && adultPrice.value < childrenPrice.value && adultPrice.value >= 0">Giá
+                vé người lớn không
+                được nhỏ hơn trẻ em</small>
+            </div>
+            <div class="col-4">
+              <label class="form-label">Trẻ em:</label>
+              <div class="input-group">
+                <input #childrenPrice="ngModel" name="children" id="children" type="number" class="form-control"
+                  ngModel="{{editTour.price.childrenPrice/1000}}" required>
+                <span class="input-group-text" id="basic-addon2">.000 VNĐ</span>
+              </div>
+              <small *ngIf="childrenPrice.touched && !childrenPrice.value">Vui lòng nhập giá vé trẻ em</small>
+              <small *ngIf="childrenPrice.touched && childrenPrice.value && childrenPrice.value < 0">Giá vé trẻ em không
+                được là số
+                âm</small>
+              <small
+                *ngIf="childrenPrice.touched && childrenPrice.value && adultPrice.value && childrenPrice.value > adultPrice.value && childrenPrice.value >= 0">Giá
+                vé trẻ không được
+                lớn hơn giá người lớn</small>
+            </div>
+            <div class="col-4">
+              <label class="form-label">Phương tiện khởi hành:</label>
+              <select #transport="ngModel" name="transport" class="form-control" ngModel="{{editTour.transport.id}}"
+                required>
+                <option value="" selected>Chọn phương tiện</option>
+                <option *ngIf="editTour.transport.isDelete == true" value="{{editTour.transport.id}}" disabled>
+                  {{editTour.transport.name}}</option>
+                <option *ngFor="let item of availableTransport" value="{{item.id}}">{{item.name}}</option>
+              </select>
+              <small *ngIf="transport.touched && transport.invalid">Phương tiện không hợp lệ</small>
+            </div>
+          </div>
+          <label class="form-label">Ảnh Bìa</label>
+          <div class="row">
+            <input class="form-control" type="file" accept="image/*" (change)="onFileChange($event)">
+            <div class="col-2"></div>
+            <div class="col-8"> <img [src]="mainImgUrl" alt="" width="100%">
+            </div>
+            <div class="col-2"></div>
+          </div>
+          <label class="form-label">Mô Tả:</label>
+          <div class="row">
+            <textarea #description="ngModel" name="description" id="" rows="6" ngModel="{{editTour.description}}"
+              required></textarea>
+            <small *ngIf="description.touched && description.invalid">Vui lòng điền mô tả</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" (click)="modal.close()"
+            *ngIf="checkValid('tour',editTourForm)">Thay đổi</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <!-- Image Modal -->
+    <ng-template #imageModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Ảnh Tour</h4>
+        <button pButton icon="pi pi-plus" id="addImageBtn" class="btn btn-success ml-3"
+          [hidden]="loadingProgress$ | async">Thêm Ảnh</button>
+        <input id="addImageInput" (change)="saveNewImage($event)" type="file" accept="image/*" hidden>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <div class="modal-body">
+        <p-progressBar mode="indeterminate" [style]="{ height: '6px' }"
+          *ngIf="loadingProgress$ | async"></p-progressBar>
+        <table class="table table-hover align-middle text-nowrap table-bordered">
+          <tbody>
+            <tr *ngFor="let img of tourImageList">
+              <td align="center">
+                <img width="200" [src]="img.path" alt="">
+              </td>
+              <td align="center">
+                <button class="btn btn-warning" (click)="updateImage(img.id)">Chỉnh
+                  sửa</button>
+                <input id="image_{{img.id}}" (change)="changeImage($event, img.id)" type="file" accept="image/*" hidden>
+              </td>
+              <td align="center">
+                <button (click)="confirmDelete('image',img.id)" class="btn btn-danger">Xóa</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <h5 *ngIf="tourImageList && tourImageList.length == 0" class="text-center">Hiện Chưa Có Ảnh Nào Được Thêm Vào
+        </h5>
+      </div>
+    </ng-template>
+
+    <!-- Tour Date Modal -->
+    <ng-template #dateModal let-modal>
+      <div class="modal-header">
+        <h2 class="modal-title mr-3" id="modal-basic-title">Ngày hoạt động</h2>
+        <button pButton icon="pi pi-plus" class="btn btn-success" (click)="addDate()" *ngIf="!addDateStatus">Thêm
+          ngày</button>
+        <label for="addDate" *ngIf="addDateStatus">Từ</label>
+        <input id="addDate" pInputText type="date" [value]="minDate | date:'yyyy-MM-dd'" *ngIf="addDateStatus"
+          min="{{minDate | date:'yyyy-MM-dd'}}" onkeypress="return false">
+        <label for="endDate" *ngIf="addDateStatus">Đến</label>
+        <input id="endDate" pInputText type="date" [value]="minDate | date:'yyyy-MM-dd'" *ngIf="addDateStatus"
+          min="{{minDate | date:'yyyy-MM-dd'}}" onkeypress="return false">
+        <pButton pButton class="p-button-success" icon="pi pi-check" (click)="saveDate()" *ngIf="addDateStatus">Thêm
+        </pButton>
+        <pButton pButton class="p-button-danger" icon="pi pi-times" (click)="cancelAddDate()" *ngIf="addDateStatus">
+          Hủy</pButton>
+        <button id="closeDateModal" type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <div class="modal-body">
+        <p-table *ngIf="tourDateList && tourDateList.length > 0" #dt2 [value]="tourDateList" sortField="initiateDate"
+          [sortOrder]=-1 dataKey="id" [rows]="10" [showCurrentPageReport]="true" [paginator]="true" editMode="row"
+          currentPageReportTemplate="Hiển thị từ bảng {first} đến {last} trong tổng {totalRecords} bảng"
+          [globalFilterFields]="['initiateDate']">
+          <ng-template pTemplate="header" class="theader">
+            <tr class="text-center">
+              <th pSortableColumn="initiateDate" style="width:20%">Thời điểm khởi hành<p-sortIcon
+                  field="initiateDate"></p-sortIcon></th>
+              <th pSortableColumn="endDate" style="width:20%">Thời điểm kết thúc<p-sortIcon
+                  field="endDate"></p-sortIcon></th>
+              <th pSortableColumn="status.name" style="width:20%">Trạng thái<p-sortIcon
+                  field="status.name"></p-sortIcon>
+              <th style="width:18%">Giai Đoạn</th>
+              <th></th>
+            </tr>
+            <tr>
+              <th>
+                <p-columnFilter type="text" field="initiateDate" placeholder="YYYY-MM-DD"></p-columnFilter>
+              </th>
+              <th>
+                <p-columnFilter type="text" field="endDate" placeholder="YYYY-MM-DD"></p-columnFilter>
+              </th>
+              <th>
+                <p-columnFilter type="text" field="status.name"></p-columnFilter>
+              </th>
+              <th></th>
+              <th></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" class="tbody" let-tourDateList let-editing="editing" let-ri="rowIndex">
+            <tr [pEditableRow]="tourDateList">
+              <td>
+                <p-cellEditor>
+                  <ng-template pTemplate="input">
+                    <input pInputText type="date" [(ngModel)]="tourDateList.initiateDate"
+                      min="{{minDate | date:'yyyy-MM-dd'}}" max="{{tourDateList.endDate}}" onkeypress="return false">
+                  </ng-template>
+                  <ng-template pTemplate="output">
+                    {{ tourDateList.initiateDate | date: 'dd-MM-yyyy' }}
+                  </ng-template>
+                </p-cellEditor>
+              </td>
+              <td>
+                <p-cellEditor>
+                  <ng-template pTemplate="input">
+                    <input pInputText type="date" [(ngModel)]="tourDateList.endDate"
+                      min="{{tourDateList.initiateDate | date:'yyyy-MM-dd'}}" onkeypress="return false">
+                  </ng-template>
+                  <ng-template pTemplate="output" class="flex">
+                    {{ tourDateList.endDate | date: 'dd-MM-yyyy' }}
+                  </ng-template>
+                </p-cellEditor>
+              </td>
+              <td>
+                <p-cellEditor>
+                  <ng-template pTemplate="input">
+                    <select class="form-control" [(ngModel)]="tourDateList.status.id" required>
+                      <option *ngFor="let st of statusList" value="{{st.id}}">{{st.name}}</option>
+                    </select>
+                  </ng-template>
+                  <ng-template pTemplate="output">
+                    {{ tourDateList.status.name}}
+                  </ng-template>
+                </p-cellEditor>
+              </td>
+              <td class="text-center">
+                <i *ngIf="tourDateList.status.id == 1" class="text-danger">Chưa Công Khai</i>
+                <i *ngIf="tourDateList.status.id == 3" class="text-danger">Đã Hủy</i>
+                <i *ngIf="dateStatus(tourDateList) == 0 && tourDateList.status.id == 2" class="text-danger">Chưa Công
+                  Khai</i>
+                <i *ngIf="dateStatus(tourDateList) == 1 && tourDateList.status.id == 2" style="color: blue">Chưa Diễn
+                  Ra</i>
+                <i *ngIf="dateStatus(tourDateList) == 2 && tourDateList.status.id == 2" class="text-warning">Đang Diễn
+                  Ra</i>
+                <i *ngIf="dateStatus(tourDateList) == 3 && tourDateList.status.id == 2" class="text-success">Đã Diễn
+                  Ra</i>
+              </td>
+              <td>
+                <div class="button-group">
+                  <button pButton pRipple *ngIf="!editing" class="btn btn-info btn-sm"
+                    [routerLink]="['/admin/tour/date/'+tourDateList.id]" (click)="modal.close()" icon="pi pi-book">Kế
+                    Hoạch</button>
+                  <button pButton pRipple
+                    *ngIf="!editing && tourDateList.status.id == 2 && bookingList && getBooking(tourDateList.id).length > 0"
+                    class="btn btn-info btn-sm" (click)="open('booking',tourDateList.id)"
+                    icon="pi pi-book">Booking</button>
+                  <button
+                    *ngIf="!editing && tourDateList.status.id != 3 && bookingList && getBooking(tourDateList.id).length == 0 && getDateDiffer(tourDateList.initiateDate) > 7"
+                    pButton pRipple type="button" pInitEditableRow icon="pi pi-pencil"
+                    (click)="onRowEditInit(tourDateList)" class="btn btn-warning btn-sm">Sửa</button>
+                  <button pButton pRipple *ngIf="!editing && tourDateList.status.id == 1" class="btn btn-danger btn-sm"
+                    (click)="checkDeleteable('date',tourDateList.id)" icon="pi pi-times-circle">Xóa</button>
+                  <button *ngIf="editing" pButton pRipple type="button" pSaveEditableRow icon="pi pi-check"
+                    (click)="onRowEditSave(tourDateList, ri)"
+                    class="p-button-rounded p-button-text p-button-success mr-2"></button>
+                  <button *ngIf="editing" pButton pRipple type="button" pCancelEditableRow icon="pi pi-times"
+                    (click)="onRowEditCancel(tourDateList, ri)"
+                    class="p-button-rounded p-button-text p-button-danger"></button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+        <h5 *ngIf="tourDateList && tourDateList.length == 0" class="text-center">Hiện Chưa Có Ngày Nào Được Thêm Vào
+        </h5>
+      </div>
+    </ng-template>
+
+    <!-- Booking Modal -->
+    <ng-template #bookingModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title mr-3" id="modal-basic-title">Danh Sách Đơn Đã Book</h4>
+        <button id="closeDateModal" type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <div class="modal-body">
+        <p-table #dt3 [value]="editBookingList" dataKey="id" [rows]="10" [showCurrentPageReport]="true"
+          [paginator]="true"
+          currentPageReportTemplate="Hiển thị từ bảng {first} đến {last} trong tổng {totalRecords} bảng"
+          [globalFilterFields]="['initiateDate']">
+          <ng-template pTemplate="caption">
+            <div class="flex">
+              <form [formGroup]="formFilter">
+                <span class="p-input-icon-left ml-auto">
+                  <input pInputText type="text" (change)="dt3.filterGlobal(getValueSearch(), 'contains')"
+                    formControlName="search" class="form-control box-shadow-none" placeholder="Tìm kiếm">
+                </span>
+              </form>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="header" class="theader">
+            <tr>
+              <th pSortableColumn="createUser">Tên Khách Hàng<p-sortIcon field="createUser"></p-sortIcon></th>
+              <th pSortableColumn="totalPassengers">Số Khách<p-sortIcon field="totalPassengers"></p-sortIcon></th>
+              <th pSortableColumn="totalPrice">Tổng Tiền<p-sortIcon field="totalPrice"></p-sortIcon></th>
+              <th pSortableColumn="status">Trạng Thái<p-sortIcon field="status"></p-sortIcon></th>
+              <th></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" class="tbody" let-editBookingList>
+            <tr>
+              <td>
+                {{editBookingList.createUser.fullname}}
+              </td>
+              <td>
+                {{editBookingList.totalPassengers}}
+              </td>
+              <td>
+                {{editBookingList.totalPrice | number }} VNĐ
+              </td>
+              <td>
+                <i *ngIf="editBookingList.status == 0" class="text-warning">Chưa Thanh Toán</i>
+                <i *ngIf="editBookingList.status == 1" class="text-success">Đã Thanh Toán</i>
+              </td>
+              <td class="button-group" *ngIf="editBookingList.status == 0">
+                <button class="btn btn-success" (click)="confirmPay(editBookingList, 1)">Đã Thanh Toán</button>
+                <button class="btn btn-danger" (click)="confirmPay(editBookingList, 2)">Hủy</button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </ng-template>
+
+    <!-- Confirm Delete Modal -->
+    <ng-template #confirmModal let-modal>
+      <div class="modal-header">
+        <b>Vui lòng xác nhận</b>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <div class="modal-body">
+        Bạn có chắc muốn xóa? Một khi đã xóa sẽ không thể khôi phục lại
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success" (click)="modal.close()">Hủy bỏ</button>
+        <button id="confirmDelete" class="btn btn-danger" (click)="modal.close()">Xác nhận</button>
+      </div>
+    </ng-template>
+
+    <!-- Hotel Modal -->
+    <ng-template #hotelModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title mr-3" id="modal-basic-title">Danh Sách Khách Sạn</h4>
+        <button class="btn btn-success" (click)="open('addHotel', null)">Thêm Khách Sạn</button>
+        <button id="closeDateModal" type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <div class="modal-body">
+        <p-table #dt3 [value]="hotelList" dataKey="id" [rows]="10" [showCurrentPageReport]="true" [paginator]="true"
+          currentPageReportTemplate="Hiển thị từ bảng {first} đến {last} trong tổng {totalRecords} bảng">
+          <ng-template pTemplate="header" class="theader">
+            <tr class="text-center">
+              <th pSortableColumn="name" style="width: 20%">Tên Khách Sạn<p-sortIcon field="name"></p-sortIcon></th>
+              <th pSortableColumn="price" style="width: 20%">Giá<p-sortIcon field="price"></p-sortIcon></th>
+              <th pSortableColumn="star" style="width: 16%">Sao<p-sortIcon field="star"></p-sortIcon></th>
+              <th pSortableColumn="address" style="width: 30%">Địa Chỉ<p-sortIcon field="address"></p-sortIcon></th>
+              <th></th>
+            </tr>
+            <tr>
+              <th>
+                <p-columnFilter type="text" field="name"></p-columnFilter>
+              </th>
+              <th>
+                <p-columnFilter type="text" field="price"></p-columnFilter>
+              </th>
+              <th>
+                <p-columnFilter type="text" field="star"></p-columnFilter>
+              </th>
+              <th>
+                <p-columnFilter type="text" field="address"></p-columnFilter>
+              </th>
+              <th></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" class="tbody" let-hotelList>
+            <tr>
+              <td>
+                {{hotelList.name}}
+              </td>
+              <td class="text-center">
+                {{hotelList.price | number}} VNĐ
+              </td>
+              <td class="text-center">
+                {{hotelList.star}}
+              </td>
+              <td>
+                {{hotelList.address}}
+              </td>
+              <td class="button-group">
+                <button pButton class="btn btn-warning btn-sm" (click)="open('editHotel', hotelList.id)">Sửa</button>
+                <button pButton class="btn btn-danger btn-sm"
+                  (click)="checkDeleteable('hotel', hotelList.id)">Xóa</button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </ng-template>
+
+    <!-- Add Hotel Modal -->
+    <ng-template #addHotelModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Thêm Khách Sạn</h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <form #addHotelForm="ngForm" class="container" (ngSubmit)="submitAddHotel(addHotelForm)">
+        <div class="modal-body">
+          <label class="form-label">Tên Khách Sạn:</label>
+          <div class="row">
+            <input #name="ngModel" name="name" class="form-control" type="text" ngModel required>
+            <small *ngIf="name.touched && name.invalid">Tên Không Được Bỏ Trống</small>
+          </div>
+          <label class="form-label">Địa Chỉ:</label>
+          <div class="row">
+            <select #province="ngModel" class="form-control col-md-4" name="province" (change)="provinceChange()"
+              id="province" ngModel required>
+              <option value="">Chọn Tỉnh/Thành Phố</option>
+            </select>
+            <select #district="ngModel" class="form-control col-md-4" name="district" (change)="districtChange()"
+              id="district" ngModel required>
+              <option value="">Chọn Quận/Huyện</option>
+            </select>
+            <select #ward="ngModel" class="form-control col-md-4" name="ward" id="ward" ngModel required>
+              <option value="">Chọn Phường/Xã</option>
+            </select>
+          </div>
+          <label class="form-label">Tên Đường:</label>
+          <div class="row">
+            <input #road="ngModel" class="form-control" name="road" type="text" placeholder="VD: Số 123, Đường ABC"
+              ngModel required>
+            <small *ngIf="road.touched && road.invalid">Vui Lòng Điền Đầy Đủ Địa Chỉ</small>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <label class="form-label">Số Sao:</label>
+              <input #star="ngModel" name="star" id="star" class="form-control" type="number" ngModel required>
+              <small *ngIf="star.touched && star.invalid">Vui Lòng Nhập Số Sao</small>
+              <small *ngIf="star.touched && star.value < 0 || star.value > 5">Vui Lòng Nhập Số Sao Từ 0 Đến 5</small>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Giá Tiền:</label>
+              <div class="input-group">
+                <input #price="ngModel" name="price" id="price" class="form-control" type="number" ngModel required>
+                <span class="input-group-text" id="basic-addon2">.000 VNĐ</span>
+              </div>
+              <small *ngIf="price.touched && price.invalid">Vui Lòng Giá Tiền</small>
+              <small *ngIf="price.touched && price.valid && price.value < 0">Vui Lòng Không Nhập Số Bé Hơn
+                0</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-info" (click)="modal.close()"
+            *ngIf="checkValid('hotel',addHotelForm)">Thêm</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <!-- Edit Hotel Modal-->
+    <ng-template #editHotelModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Sửa Khách Sạn</h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <form #editHotelForm="ngForm" class="container" (ngSubmit)="submitEditHotel(editHotelForm)">
+        <div class="modal-body">
+          <label class="form-label">Tên Khách Sạn:</label>
+          <div class="row">
+            <input #name="ngModel" name="name" class="form-control" type="text" ngModel="{{editHotel.name}}" required>
+            <small *ngIf="name.touched && name.invalid">Tên Không Được Bỏ Trống</small>
+          </div>
+          <label class="form-label">Địa Chỉ:</label>
+          <div class="row">
+            <select #province class="form-control col-md-4" name="province" (change)="provinceChange()" id="province"
+              required>
+              <option value="">Chọn Tỉnh/Thành Phố</option>
+            </select>
+            <select #district class="form-control col-md-4" name="district" (change)="districtChange()" id="district"
+              required>
+              <option value="">Chọn Quận/Huyện</option>
+            </select>
+            <select #ward class="form-control col-md-4" name="ward" id="ward" required>
+              <option value="">Chọn Phường/Xã</option>
+            </select>
+          </div>
+          <label class="form-label">Tên Đường:</label>
+          <div class="row">
+            <input #road="ngModel" class="form-control" name="road" type="text" placeholder="VD: Số 123, Đường ABC"
+              ngModel="{{roadValue}}" required>
+            <small *ngIf="road.touched && road.invalid">Vui Lòng Điền Đầy Đủ Địa Chỉ</small>
+          </div>
+          <div class="row">
+            <div class="col-4">
+              <label class="form-label">Số Sao:</label>
+              <input #star="ngModel" name="star" id="star" class="form-control" type="number"
+                ngModel="{{editHotel.star}}" required>
+              <small *ngIf="star.touched && star.invalid">Vui Lòng Nhập Số Sao</small>
+              <small *ngIf="star.touched && star.value < 0 || star.value > 5">Vui Lòng Nhập Số Sao Từ 0 Đến 5</small>
+            </div>
+            <div class="col-4">
+              <label class="form-label">Giá Tiền:</label>
+              <div class="input-group">
+                <input #price="ngModel" name="price" id="price" class="form-control" type="number"
+                  ngModel="{{editHotel.price/1000}}" required>
+                <span class="input-group-text" id="basic-addon2">.000 VNĐ</span>
+                <small *ngIf="price.touched && price.invalid">Vui Lòng Giá Tiền</small>
+                <small *ngIf="price.touched && price.valid && price.value <= 0">Vui Lòng Không Nhập Số Bé Hơn Bằng
+                  0</small>
+              </div>
+            </div>
+            <div class="col-4">
+              <label class="form-label">Trang Thái:</label>
+              <div class="input-group">
+                <select #isDelete="ngModel" name="isDelete" id="isDelete" class="form-control"
+                  ngModel="{{editHotel.isDelete}}" required="">
+                  <option value=false>Còn Hoạt Động</option>
+                  <option value=true>Ngưng Hoạt Động</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" (click)="modal.close()"
+            *ngIf="checkValid('hotel',editHotelForm)">Sửa</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <!-- Transport Modal-->
+    <ng-template #transportModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title mr-3" id="modal-basic-title">Danh Sách Phương Tiện</h4>
+        <button class="btn btn-success" (click)="open('addTransport', null)">Thêm Phương Tiện</button>
+        <button id="closeDateModal" type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <div class="modal-body">
+        <p-table #dt3 [value]="transportList" dataKey="id" [rows]="10" [showCurrentPageReport]="true" [paginator]="true"
+          currentPageReportTemplate="Hiển thị từ bảng {first} đến {last} trong tổng {totalRecords} bảng">
+          <ng-template pTemplate="header" class="theader">
+            <tr class="text-center">
+              <th pSortableColumn="name" style="width:25%">Tên Phương Tiện<p-sortIcon field="name"></p-sortIcon></th>
+              <th pSortableColumn="seatingCapacity" style="width:20%">Sức Chứa<p-sortIcon
+                  field="seatingCapacity"></p-sortIcon></th>
+              <th pSortableColumn="price" style="width:20%">Giá<p-sortIcon field="price"></p-sortIcon></th>
+              <th pSortableColumn="isDelete" style="width:20%">Trạng Thái<p-sortIcon field="isDelete"></p-sortIcon></th>
+              <th></th>
+            </tr>
+            <tr>
+              <th>
+                <p-columnFilter type="text" field="name"></p-columnFilter>
+              </th>
+              <th>
+                <p-columnFilter type="text" field="seatingCapacity"></p-columnFilter>
+              </th>
+              <th>
+                <p-columnFilter type="text" field="price"></p-columnFilter>
+              </th>
+              <th></th>
+              <th></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" class="tbody" let-transportList>
+            <tr>
+              <td>
+                {{transportList.name}}
+              </td>
+              <td class="text-center">
+                {{transportList.seatingCapacity | number}} Người
+              </td>
+              <td class="text-center">
+                {{transportList.price | number}} VNĐ
+              </td>
+              <td class="text-center">
+                {{transportList.isDelete ? 'Ngừng Hoạt Động' : 'Còn Hoạt Động'}}
+              </td>
+              <td class="button-group">
+                <button pButton class="btn btn-warning btn-sm"
+                  (click)="open('editTransport', transportList.id)">Sửa</button>
+                <button pButton class="btn btn-danger btn-sm"
+                  (click)="checkDeleteable('transport', transportList.id)">Xóa</button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </ng-template>
+
+    <!-- Add Transport Modal -->
+    <ng-template #addTransportModal let-modal>
+      <div class=" modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Thêm Phương Tiện</h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <form #addTransportForm="ngForm" class="container" (ngSubmit)="submitAddTransport(addTransportForm)">
+        <div class="modal-body">
+          <label class="form-label">Tên Phương Tiện:</label>
+          <div class="row">
+            <input #name="ngModel" name="name" class="form-control" type="text" ngModel required>
+            <small *ngIf="name.touched && name.invalid">Tên Không Được Bỏ Trống</small>
+          </div>
+          <div class="row">
+            <div class="col-6">
+              <label class="form-label">Sức Chứa:</label>
+              <input #seatingCapacity="ngModel" name="seatingCapacity" id="seatingCapacity" class="form-control"
+                type="number" ngModel required>
+              <small *ngIf="seatingCapacity.touched && seatingCapacity.invalid">Vui Lòng Nhập Sức Chứa</small>
+              <small *ngIf="seatingCapacity.touched && seatingCapacity.valid && seatingCapacity.value <= 0">Vui Lòng
+                Không Nhập Số Bé Hơn Bằng
+                0</small>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Giá Tiền:</label>
+              <div class="input-group">
+                <input #price="ngModel" name="price" id="price" class="form-control" type="number" ngModel required>
+                <span class="input-group-text" id="basic-addon2">.000 VNĐ</span>
+              </div>
+              <small *ngIf="price.touched && price.invalid">Vui Lòng Giá Tiền</small>
+              <small *ngIf="price.touched && price.valid && price.value < 0">Vui Lòng Không Nhập Số Bé Hơn 0</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-info" (click)="modal.close()"
+            *ngIf="checkValid('transport',addTransportForm)">Thêm</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <!-- Edit Transport Modal -->
+    <ng-template #editTransportModal let-modal>
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Thêm Phương Tiện</h4>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+      </div>
+      <form #editTransportForm="ngForm" class="container" (ngSubmit)="submitEditTransport(editTransportForm)">
+        <div class="modal-body">
+          <label class="form-label">Tên Phương Tiện:</label>
+          <div class="row">
+            <input #name="ngModel" name="name" class="form-control" type="text" ngModel={{editTransport.name}} required>
+            <small *ngIf="name.touched && name.invalid">Tên Không Được Bỏ Trống</small>
+          </div>
+          <div class="row">
+            <div class="col-4">
+              <label class="form-label">Sức Chứa:</label>
+              <input #seatingCapacity="ngModel" name="seatingCapacity" id="seatingCapacity" class="form-control"
+                type="number" ngModel="{{editTransport.seatingCapacity}}" required>
+              <small *ngIf="seatingCapacity.touched && seatingCapacity.invalid">Vui Lòng Nhập Sức Chứa</small>
+              <small *ngIf="seatingCapacity.touched && seatingCapacity.valid && seatingCapacity.value <= 0">Vui Lòng
+                Không Nhập Số Bé Hơn Bằng
+                0</small>
+            </div>
+            <div class="col-4">
+              <label class="form-label">Giá Tiền:</label>
+              <div class="input-group">
+                <input #price="ngModel" name="price" id="price" class="form-control" type="number"
+                  ngModel="{{editTransport.price/1000}}" required>
+                <span class="input-group-text" id="basic-addon2">.000 VNĐ</span>
+              </div>
+              <small *ngIf="price.touched && price.invalid">Vui Lòng Giá Tiền</small>
+              <small *ngIf="price.touched && price.valid && price.value < 0">Vui Lòng Không Nhập Số Bé Hơn 0</small>
+            </div>
+            <div class="col-4">
+              <label class="form-label">Trạng Thái:</label>
+              <select #isDelete="ngModel" name="isDelete" id="isDelete" class="form-control"
+                [ngModel]="editTransport.isDelete" required>
+                <option value=false selected>Hoạt Động</option>
+                <option value=true>Ngừng Hoạt Động</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" (click)="modal.close()"
+            *ngIf="checkValid('transport',editTransportForm)">Sửa</button>
+        </div>
+      </form>
+    </ng-template>
+
+    <!-- Main Table -->
+    <div class="table-responsive">
+      <p-table #dt1 [value]="tourList" sortField="active" [sortOrder]="-1" dataKey="id" [rows]="5" [showCurrentPageReport]="true"
+        [paginator]="true"
+        currentPageReportTemplate="Hiển thị từ bảng {first} đến {last} trong tổng {totalRecords} bảng"
+        [globalFilterFields]="['name']" [tableStyle]="{'min-width': '80rem'}">
+        <ng-template pTemplate="header" class="theader">
+          <tr class="text-center">
+            <th pSortableColumn="name" style="width:20%">Tên Tour<p-sortIcon field="name"></p-sortIcon></th>
+            <th pSortableColumn="destinationAddress" style="width:20%">Điểm đến<p-sortIcon
+                field="destinationAddress"></p-sortIcon></th>
+            <th pSortableColumn="active" style="width:12%">Trạng thái<p-sortIcon field="active"></p-sortIcon></th>
+            <th pSortableColumn="availableSpaces" style="width:12%">Số lượng<p-sortIcon
+                field="availableSpaces"></p-sortIcon></th>
+            <th pSortableColumn="transport" style="width:12%">Phương tiện<p-sortIcon field="transport"></p-sortIcon>
+            </th>
+            <th></th>
+          </tr>
+          <tr>
+            <th>
+              <p-columnFilter type="text" field="name"></p-columnFilter>
+            </th>
+            <th>
+              <p-columnFilter type="text" field="destinationAddress"></p-columnFilter>
+            </th>
+            <th>
+              <p-columnFilter field="active" matchMode="in" [showMenu]="false">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <p-multiSelect [ngModel]="value" appendTo="body" [options]='[true,false]' placeholder="Any"
+                    (onChange)="filter($event.value)" optionLabel="" [maxSelectedLabels]="1"
+                    [selectedItemsLabel]="'{0} items'">
+                    <ng-template let-option pTemplate="item">
+                      <div class="p-multiselect-representative-option">
+                        <span class="ml-1" *ngIf="option == true">Công Khai</span>
+                        <span class="ml-1" *ngIf="option == false">Ẩn</span>
+                      </div>
+                    </ng-template>
+                  </p-multiSelect>
+                </ng-template>
+              </p-columnFilter>
+            </th>
+            <th>
+              <p-columnFilter type="text" field="availableSpaces"></p-columnFilter>
+            </th>
+            <th>
+              <p-columnFilter field="transport" matchMode="in" [showMenu]="false">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                  <p-multiSelect [ngModel]="value" appendTo="body" [options]="transportList" placeholder="Any"
+                    (onChange)="filter($event.value)" optionLabel="name" [maxSelectedLabels]="1"
+                    [selectedItemsLabel]="'{0} items'">
+                    <ng-template let-option pTemplate="item">
+                      <div class="p-multiselect-representative-option">
+                        <span class="ml-1">{{option.name}}</span>
+                      </div>
+                    </ng-template>
+                  </p-multiSelect>
+                </ng-template>
+              </p-columnFilter>
+            </th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" class="tbody" let-tourList>
+          <tr>
+            <td>{{ tourList.name }}</td>
+            <td>{{ tourList.destinationAddress }}</td>
+            <td class="text-center">{{ tourList.active ? "Công khai" : "Ẩn"}}</td>
+            <td class="text-center">{{ tourList.availableSpaces}}</td>
+            <td class="text-center">{{ tourList.transport.name}}</td>
+            <td class="button-group">
+              <button pButton class="btn btn-info btn-sm" (click)="open('date', tourList.id)"
+                icon="pi pi-calendar">Ngày</button>
+              <button pButton class="btn btn-primary btn-sm" (click)="open('image', tourList.id)"
+                icon="pi pi-calendar">Ảnh</button>
+              <button pButton class="btn btn-warning btn-sm" (click)="open('editTour', tourList.id)"
+                icon="pi pi-file-edit">Sửa</button>
+              <button pButton class="btn btn-success btn-sm" (click)="updateActive(tourList)" icon="pi pi-eye"
+                *ngIf="tourList.active == false">Hiện</button>
+              <button pButton class="btn btn-danger btn-sm" (click)="updateActive(tourList)" icon="pi pi-eye-slash"
+                *ngIf="tourList.active != false">ẨN</button>
+              <button pButton class="btn btn-danger btn-sm" (click)="checkDeleteable('tour',tourList.id)"
+                icon="pi pi-times-circle">Xóa</button>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>

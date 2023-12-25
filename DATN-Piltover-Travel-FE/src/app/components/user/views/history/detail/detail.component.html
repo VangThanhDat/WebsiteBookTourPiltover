@@ -1,0 +1,113 @@
+<main>
+  <section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url(../assets/images/bg_1.jpg);">
+    <div class="container">
+      <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+        <div class="col-md-9 ftco-animate pb-5 text-center">
+          <p class="breadcrumbs">
+            <span class="mr-2"><a href="/">Trang chủ <i class="fa fa-chevron-right"></i></a></span>
+            <span class="mr-2"><a href="/history">Lịch sử đặt tour <i class="fa fa-chevron-right"></i></a></span>
+            <span class="mr-2"><a>Chi tiết Booking <i class="fa fa-chevron-right"></i></a></span>
+          </p>
+          <h1 class="mb-0 bread">Chi tiết Booking</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="ftco-section services-section container">
+    <div class="tab-pane fade show active">
+      <div class="cart_inner text-dark" style="min-height: 360px !important;">
+        <div class="row" *ngIf="history">
+          <h2 class="mb-5 text-center">Thông tin chi tiết</h2>
+          <div class="col-5">
+            <img src="{{history.booking.tourDate.tour.image}}" width="100%">
+          </div>
+          <div class="col-md-7">
+            <ul>
+              <li><span class="font-weight-bold">Mã booking: </span>{{history.booking.id}}
+              </li>
+
+              <li><span class="font-weight-bold">Tên tour: </span>
+                {{history.booking.tourDate.tour.name}}</li>
+
+              <li>
+                <span class="font-weight-bold">Chi phí: </span>
+                <span class="text-danger">{{history.booking.totalPrice| number}} VNĐ
+                </span> -
+                <span [ngSwitch]="history.booking.status">
+                  <span *ngSwitchCase="0" class="text-warning">Chưa thanh toán</span>
+                  <span *ngSwitchCase="1" class="text-success">Đã thanh toán</span>
+                  <span *ngSwitchCase="2" class="text-danger">Đã hủy</span>
+                </span>
+              </li>
+
+              <li><span class="font-weight-bold">Ngày khởi hành:</span>
+                {{history.booking.tourDate.initiateDate|date:'dd-MM-yyyy'}}
+              </li>
+
+              <li><span class="font-weight-bold">Ngày ngày kết thúc:</span>
+                {{history.booking.tourDate.endDate|date:'dd-MM-yyyy'}}
+              </li>
+
+              <li><span class="font-weight-bold">Phương tiện di chuyển:</span>
+                {{history.booking.tourDate.tour.transport.name}}
+              </li>
+
+              <li><span class="font-weight-bold">Khách sạn:</span>
+                {{history.booking.tourDate.tour.hotel.name}} ( {{history.booking.tourDate.tour.hotel.address}} )
+              </li>
+
+              <li><span class="font-weight-bold">Người lớn:</span> {{history.adult}} người</li>
+
+              <li><span class="font-weight-bold">Trẻ em:</span> {{history.children}} người</li>
+
+              <li *ngIf="history.booking.status == 0">
+                <b>Thanh Toán:</b>
+                <button class="btn btn-paypal" (click)="toPayment(1)"><img
+                    src="../../../../../assets/images/logos/paypal.png" width="20px" alt="paypal icon">
+                  Paypal</button>
+                <button class="btn btn-vnpay" (click)="toPayment(2)"><img
+                    src="../../../../../assets/images/logos/vnpay.png" width="20px" alt="vnpay icon">
+                  VNPay</button>
+              </li>
+            </ul>
+            <div class="row col-md-12 mt-5">
+              <div class="text-right">
+                <button class="btn btn-outline-info col-md-2" [routerLink]="['/history']"
+                  routerLinkActive="router-link-active">Trở lại</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row my-3">
+          <p-divider></p-divider>
+        </div>
+
+        <div class="row">
+          <h2 class="mb-1 text-left col-md-12">Lịch trình của tour</h2>
+          <p-accordion [multiple]="true" [activeIndex]="[0]">
+            <div *ngFor="let tp of listTourPlan">
+              <p-accordionTab [header]="tp.startTime| date:'dd/MM/yyyy HH:mm:ss'">
+                <div *ngFor="let tpd of listTourPlanDetail">
+                 <div [hidden]="tp.id != tpd.tourPlan.id">
+                  <p><Strong>Mô tả: </Strong>{{tpd.description}}</p>
+                  <p><Strong>Địa điểm bắt đầu: </Strong>{{tp.startAddress}}</p>
+                  <p><strong>Thời gian bắt đầu: </strong>{{tpd.startTime}}</p>
+                  <p><strong>Thời gian kết thúc: </strong>{{tpd.endTime}}</p>
+                  <p-divider></p-divider>
+                 </div>
+
+                </div>
+
+              </p-accordionTab>
+            </div>
+          </p-accordion>
+        </div>
+
+        <div *ngIf="loading">
+          <h2 class="text-center font-weight-bold">Đang tìm kiếm dữ liệu xin vui lòng chờ</h2>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

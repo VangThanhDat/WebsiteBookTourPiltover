@@ -1,0 +1,126 @@
+<section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url(../assets/images/bg_1.jpg);">
+  <!-- <div class="overlay"></div> -->
+  <div class="container">
+    <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+      <div class="col-md-9 ftco-animate pb-5 text-center">
+        <p class="breadcrumbs">
+          <span class="mr-2"><a routerLink="/home">Trang chủ <i class="fa fa-chevron-right"></i></a>
+          </span> <span class="mr-2"><a routerLink="/blog">Bài viết <i class="fa fa-chevron-right"></i></a>
+          </span> <span>Bài viết chi tiết <i class="fa fa-chevron-right"></i></span>
+        </p>
+        <h1 class="mb-0 bread">Bài Viết Chi Tiết</h1>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ftco-section ftco-no-pt ftco-no-pb">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12 ftco-animate py-md-5 mt-md-5">
+        <h2 class="mb-3" [innerHTML]="post.title"></h2>
+        <p [innerHTML]="post.content"></p>
+        <p-galleria [value]="imgs" [containerStyle]="{ 'max-width': '100%' }">
+          <ng-template pTemplate="item" let-item>
+            <img [src]="item.path" style="width: 90%;" />
+          </ng-template>
+          <ng-template pTemplate="thumbnail" let-item>
+            <div class="grid grid-nogutter justify-content-center">
+              <img [src]="item.path" width="10%" height="50%"/>
+            </div>
+          </ng-template>
+        </p-galleria>
+
+        <div class="pt-5 mt-5">
+          <button class="Btn" (click)="doLike()">
+            <span class="leftContainer">
+              <i class="pi pi-heart" style="color: white;" *ngIf="userLike == false  || userLike == null"></i>
+              <i class="pi pi-heart-fill" style="color: white;" *ngIf="userLike == true"></i>
+              <span class="like">Like</span>
+            </span>
+            <span class="likeCount">
+              {{countLike}}
+            </span>
+          </button>
+          <h3 class="mb-5 col-3" style="font-size: 20px; font-weight: bold;">{{countCmt}} Comments</h3>
+          <ul class="comment-list" *ngFor="let item of cmt | paginate: { itemsPerPage: itemsPerPage, currentPage: p }">
+            <li class="comment">
+              <div class="vcard bio">
+                <img
+                  src="https://firebasestorage.googleapis.com/v0/b/postimage-duantn.appspot.com/o/avatar.png?alt=media&token=9537d31f-274c-4318-a3a8-cc84565d0473"
+                  alt="Image placeholder">
+              </div>
+              <div class="comment-body">
+                <div class="row" style="margin-bottom: -7px !important;">
+                  <p class="col-10" style="font-weight: bold; font-size: 20px;">{{item.commentUser.fullname}}</p>
+                  <div class="col-2" *ngIf="item.commentUser.id == userCmt" style="float: right;">
+                    <details class="dropdown">
+                      <summary role="button">
+                        <a class="button">...</a>
+                      </summary>
+                      <ul>
+                        <li><a role="button" (click)="getCommentId(item.id)">Sửa</a></li>
+                        <li><a role="button" (click)="removeCmt(item.id)">Xóa</a></li>
+                      </ul>
+                    </details>
+                  </div>
+                </div>
+                <div class="meta" style="color: grey; font-size: 10px">{{item.commentTime | date:"dd-MM-yyyy HH:mm:ss"}}
+                  <p *ngIf="item.updateTime != null" style="color: grey; font-size: 10px;"> đã chỉnh sửa vào lúc
+                    {{item.updateTime | date:"dd-MM-yyyy HH:mm:ss"}}
+                  </p>
+                </div>
+                <div *ngIf="item.id == editId else else_Things">
+                  <form [formGroup]="editCmt" (ngSubmit)="editComment(item.id)" style="display: flex; float: left;">
+                    <input type="text" formControlName="content" [(ngModel)]="item.content">
+                    <button class="btn btn-danger" (click)="setCommentId()" style="margin-left: 5px;"><i
+                        class="pi pi-times" style="color: black"></i></button>
+                    <button class="btn btn-info" type="submit" style="margin-left: 5px;"><i class="pi pi-check"
+                        style="color: black"></i></button>
+                    <div class="text-danger" style="font-size: large; margin-left: 10px;">{{message_validition}}</div>
+                  </form>
+                </div>
+                <ng-template #else_Things>
+                  <p style="font-size: 17px !important;">{{item.content}}</p>
+                </ng-template>
+              </div>
+            </li>
+          </ul>
+          <pagination-controls (pageChange)="p = $event" nextLabel="Sau" previousLabel="Trước"></pagination-controls>
+          <!-- END comment-list -->
+          <form [formGroup]="addCmt" (ngSubmit)="saveComment()" style="display: flex; float: left;width: 100%;">
+            <div class="vcard bio">
+              <img
+                src="https://firebasestorage.googleapis.com/v0/b/postimage-duantn.appspot.com/o/avatar.png?alt=media&token=9537d31f-274c-4318-a3a8-cc84565d0473"
+                alt="Image placeholder" width="50px">
+            </div>
+            <input type="text" formControlName="content" placeholder="Add comment" style="width: 80%;">
+            <button class="btn btn-light col-1" type="submit" style="margin-left: 5px;"><i class="pi pi-send"
+                style="color: black"></i></button>
+            <div class="text-danger" style="font-size: large; margin-left: 10px;">{{message_validition}}</div>
+          </form>
+        </div>
+      </div>
+      <div class="sidebar-box">
+        <h3>Bài viết đề xuất cho bạn</h3>
+        <div class="block-21 mb-4 d-flex" *ngFor="let item of randomPost">
+          <a class="blog-img mr-4" style="background-image: url('{{item.path}}');"></a>
+          <div class="text">
+            <h3 class="heading"><a routerLink="/post-single/{{item.id}}">{{item.title}}</a></h3>
+            <div class="meta">
+              <div><a routerLink="/post-single/{{item.id}}"><span class="fa fa-calendar"></span> {{item.createTime |
+                  date:"dd-MM-yyyy"}}</a></div>
+              <div><a routerLink="/post-single/{{item.id}}"><span class="fa fa-user"></span>
+                  {{item.createUser.fullname}}</a>
+              </div>
+              <!-- <div><a href="#"><span class="fa fa-comment"></span> 19</a></div> -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section> <!-- .section -->
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '50vw'}"></p-confirmDialog>
